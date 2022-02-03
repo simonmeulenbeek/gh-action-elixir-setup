@@ -1,0 +1,47 @@
+name: 'Setup Elixir Project / Component'
+description: 'Setup elixir project / component'
+inputs:
+  project-dir:
+    description: 'Path to the elixir project/component'
+    required: false
+    default: '.'
+  lock-file:
+    description: "Path to lock-file (relative to 'project-dir')"
+    required: false
+    default: 'mix.lock'
+  dependencies-dir:
+    description: "Path to 'deps'-directory (relative to 'project-dir')"
+    required: false
+    default: 'deps'
+  build-dir:
+    description: "Path to '_build'-directory (relative to 'project-dir')"
+    required: false
+    default: '_build'
+runs:
+  using: "composite"
+  steps:
+    - name: 'Fetching project'
+      uses: actions/checkout@v2
+    - name: Restore dependencies from cache
+        continue-on-error: true
+        uses: actions/cache@v2
+        env:
+          cache-name: dependencies
+        with:
+          path: |
+            {{ inputs.project-dir }}/{{ inputs.dependencies-dir }}/**
+          key: ${{ runner.os }}_${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('{{ inputs.project-dir }}/{{ inputs.lock-file }}') }}
+          restore-keys: |
+            ${{ runner.os }}_${{ runner.arch }}-${{ env.cache-name }}-            
+    - name: Restore build output from cache
+        continue-on-error: true
+        uses: actions/cache@v2
+        env:
+          cache-name: build
+        with:
+          path: |
+            {{ inputs.project-dir }}/{{ inputs.build-dir }}/**/lib/**
+          key: ${{ runner.os }}_${{ runner.arch }}-${{ env.cache-name }}-${{ hashFiles('{{ inputs.project-dir }}/{{ inputs.lock-file }}') }}
+          restore-keys: |
+            ${{ runner.os }}_${{ runner.arch }}-${{ env.cache-name }}-
+            
